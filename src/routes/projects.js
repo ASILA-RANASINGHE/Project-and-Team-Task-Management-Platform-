@@ -125,4 +125,31 @@ router.patch('/:id', authorize(['ADMIN', 'PROJECT_MANAGER']), async (req, res, n
   }
 });
 
+// ── DELETE /projects/:id ──
+// Admin can delete any project. PM can delete only their own managed projects.
+// Team Members cannot delete projects.
+router.delete('/:id', authorize(['ADMIN', 'PROJECT_MANAGER']), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { userId, role } = req.user;
+
+    const existing = await prisma.project.findUnique({ where: { id } });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // PM can only delete projects they manage
+    if (role === 'PROJECT_MANAGER' && existing.managerId !== userId) {
+      return res.status(403).json({ message: 'Forbidden: you can only delete projects you manage' });
+    }
+
+    await prisma.project.delete({ where: { id } });
+
+    return res.status(200).json({ message: 'Project deleted successfully' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = { projectRouter: router };
