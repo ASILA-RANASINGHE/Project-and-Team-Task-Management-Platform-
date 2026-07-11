@@ -77,4 +77,52 @@ router.post('/', authorize(['ADMIN', 'PROJECT_MANAGER']), async (req, res, next)
   }
 });
 
+const updateProjectSchema = z.object({
+  name: z.string().trim().min(1, 'Project name is required').optional(),
+  description: z.string().trim().optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: 'At least one field must be provided for update',
+});
+
+// ── PATCH /projects/:id ──
+// Admin can update any project. PM can update only their own managed projects.
+// Team Members cannot update projects.
+router.patch('/:id', authorize(['ADMIN', 'PROJECT_MANAGER']), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { userId, role } = req.user;
+
+    // Verify the project exists
+    const existing = await prisma.project.findUnique({ where: { id } });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // PM can only update projects they manage
+    if (role === 'PROJECT_MANAGER' && existing.managerId !== userId) {
+      return res.status(403).json({ message: 'Forbidden: you can only update projects you manage' });
+    }
+
+    const parsed = updateProjectSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: parsed.error.flatten().fieldErrors,
+      });
+    }
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: parsed.data,
+      include: { manager: { select: { id: true, name: true, email: true } } },
+    });
+
+    return res.status(200).json({ message: 'Project updated successfully', project });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = { projectRouter: router };
