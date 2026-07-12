@@ -73,7 +73,7 @@ export default function LoginPage() {
         <div className="absolute -bottom-32 -right-32 h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[100px]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="animate-fade-in-up relative z-10 w-full max-w-md">
         {/* Card */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-10">
           {/* Header */}
