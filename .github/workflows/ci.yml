@@ -8,13 +8,8 @@ on:
 
 env:
   NODE_VERSION: '20'
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:
-  # ──────────────────────────────────────────────────────────
-  # Lint
-  # ──────────────────────────────────────────────────────────
   lint:
     name: 🔍 ESLint
     runs-on: ubuntu-latest
@@ -35,9 +30,6 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-  # ──────────────────────────────────────────────────────────
-  # Backend tests
-  # ──────────────────────────────────────────────────────────
   test-backend:
     name: 🧪 Backend Tests
     runs-on: ubuntu-latest
@@ -92,9 +84,6 @@ jobs:
           path: coverage/
           retention-days: 14
 
-  # ──────────────────────────────────────────────────────────
-  # Build
-  # ──────────────────────────────────────────────────────────
   build:
     name: 🏗️ Build
     runs-on: ubuntu-latest
@@ -112,9 +101,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
 
       - name: Build project
         run: npm run build
