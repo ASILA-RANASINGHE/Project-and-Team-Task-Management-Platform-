@@ -70,8 +70,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Sync database schema
-        run: npx prisma db push --skip-generate
+      - name: Run database migrations
+        run: npx prisma migrate deploy
 
       - name: Run Jest tests
         run: npm run test:ci
