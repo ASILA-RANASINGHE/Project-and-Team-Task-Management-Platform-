@@ -218,6 +218,17 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Register link */}
+          <p className="mt-6 text-center text-sm text-slate-400">
+            Don&apos;t have an account?{' '}
+            <a
+              href="/register"
+              className="font-medium text-sky-400 transition-colors hover:text-sky-300"
+            >
+              Create account
+            </a>
+          </p>
         </div>
 
         {/* Footer */}
