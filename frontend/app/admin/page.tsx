@@ -38,7 +38,7 @@ function AdminDashboard() {
     try {
       setError('');
       const { data } = await api.get<User[]>('/users');
-      setUsers(data);
+      setUsers(data.users);
     } catch {
       setError('Failed to load users.');
     } finally {
@@ -242,3 +242,5 @@ export default function AdminPage() {
     </ProtectedRoute>
   );
 }
+
+
