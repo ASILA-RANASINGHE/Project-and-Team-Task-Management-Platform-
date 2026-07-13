@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import StatsCard from '../../components/StatsCard';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
 
 interface User {
@@ -31,18 +32,17 @@ const ROLE_BADGE_CLASSES: Record<Role, string> = {
 const ALL_ROLES: Role[] = ['ADMIN', 'PROJECT_MANAGER', 'TEAM_MEMBER'];
 
 function AdminDashboard() {
+  const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
-      setError('');
       const { data } = await api.get<{ users: User[] }>('/users');
       setUsers(data.users);
     } catch {
-      setError('Failed to load users.');
+      toast.error('Failed to load users.');
     } finally {
       setLoading(false);
     }
@@ -61,8 +61,9 @@ function AdminDashboard() {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role: data.role } : u)),
       );
+      toast.success('Role updated successfully.');
     } catch {
-      setError('Failed to update role. Please try again.');
+      toast.error('Failed to update role. Please try again.');
     } finally {
       setUpdatingId(null);
     }
@@ -125,34 +126,6 @@ function AdminDashboard() {
           accentGradient="from-violet-400 to-purple-500"
         />
       </div>
-
-      {/* Error banner */}
-      {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 flex-shrink-0"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{error}</span>
-          <button
-            onClick={() => setError('')}
-            className="ml-auto text-red-400 transition-colors hover:text-red-200"
-            aria-label="Dismiss error"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {/* Table card */}
       <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/30 backdrop-blur-lg">

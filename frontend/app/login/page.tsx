@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
+import { useToast } from '../../context/ToastContext';
 
 interface LoginUser {
   id: string;
@@ -24,16 +25,15 @@ const ROLE_ROUTES: Record<LoginUser['role'], string> = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -46,6 +46,7 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       const destination = ROLE_ROUTES[data.user.role] ?? '/member';
+      toast.success('Logged in successfully!');
       router.push(destination);
     } catch (err: unknown) {
       if (
@@ -54,11 +55,11 @@ export default function LoginPage() {
         'response' in err &&
         typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
       ) {
-        setError(
+        toast.error(
           (err as { response: { data: { message: string } } }).response.data.message,
         );
       } else {
-        setError('Login failed. Please check your credentials and try again.');
+        toast.error('Login failed. Please check your credentials and try again.');
       }
     } finally {
       setLoading(false);
@@ -101,25 +102,6 @@ export default function LoginPage() {
               Sign in to your account to continue
             </p>
           </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 flex-shrink-0"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">

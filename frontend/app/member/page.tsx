@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import StatsCard from '../../components/StatsCard';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
 
 /* ── Types ── */
@@ -57,23 +58,22 @@ const STATUS_COLORS: Record<TaskStatus, { badge: string; border: string }> = {
    ─────────────────────────────────────────── */
 
 function MemberDashboard() {
+  const toast = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     try {
-      setError('');
       const { data } = await api.get<TasksResponse | Task[]>('/tasks');
       const loadedTasks = Array.isArray(data) ? data : data.tasks;
       setTasks(loadedTasks ?? []);
     } catch {
-      setError('Failed to load your assigned tasks.');
+      toast.error('Failed to load your assigned tasks.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchTasks();
@@ -86,8 +86,9 @@ function MemberDashboard() {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
       );
+      toast.success('Task status updated.');
     } catch {
-      setError('Failed to update task status. Please try again.');
+      toast.error('Failed to update task status. Please try again.');
     } finally {
       setUpdatingTaskId(null);
     }
@@ -149,43 +150,6 @@ function MemberDashboard() {
           accentGradient="from-emerald-400 to-teal-500"
         />
       </div>
-
-      {/* Error banner */}
-      {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 flex-shrink-0"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{error}</span>
-          <button
-            onClick={() => setError('')}
-            className="ml-auto text-red-400 transition-colors hover:text-red-200"
-            aria-label="Dismiss error"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {/* Task List */}
       {tasks.length === 0 ? (

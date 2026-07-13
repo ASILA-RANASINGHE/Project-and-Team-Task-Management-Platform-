@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute, { Role } from '../../../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../../../components/AuthenticatedLayout';
+import { useToast } from '../../../../context/ToastContext';
 import { api } from '../../../../lib/api';
 
 /* ── Types ── */
@@ -64,10 +65,10 @@ const STATUS_BADGE: Record<TaskStatus, string> = {
 function ProjectDashboard() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   // ── Task form ──
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -76,14 +77,11 @@ function ProjectDashboard() {
   const [taskDue, setTaskDue] = useState('');
   const [taskAssignee, setTaskAssignee] = useState('');
   const [creatingTask, setCreatingTask] = useState(false);
-  const [taskFormError, setTaskFormError] = useState('');
 
   // ── Member form ──
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [memberEmail, setMemberEmail] = useState('');
   const [addingMember, setAddingMember] = useState(false);
-  const [memberFormError, setMemberFormError] = useState('');
-  const [memberSuccess, setMemberSuccess] = useState('');
 
   // ── Status update ──
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
@@ -91,7 +89,6 @@ function ProjectDashboard() {
   /* ── Fetch project ── */
   const fetchProject = useCallback(async () => {
     try {
-      setError('');
       const { data } = await api.get<{ project: ProjectDetail } | ProjectDetail>(
         `/projects/${id}`,
       );
@@ -99,11 +96,11 @@ function ProjectDashboard() {
       const proj = 'project' in data ? data.project : data;
       setProject(proj);
     } catch {
-      setError('Failed to load project.');
+      toast.error('Failed to load project.');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     fetchProject();
@@ -112,7 +109,6 @@ function ProjectDashboard() {
   /* ── Create task ── */
   async function handleCreateTask(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setTaskFormError('');
     setCreatingTask(true);
 
     try {
@@ -133,8 +129,9 @@ function ProjectDashboard() {
       setTaskDue('');
       setTaskAssignee('');
       setShowTaskForm(false);
+      toast.success('Task created successfully!');
     } catch (err: unknown) {
-      setTaskFormError(extractMessage(err, 'Failed to create task.'));
+      toast.error(extractMessage(err, 'Failed to create task.'));
     } finally {
       setCreatingTask(false);
     }
@@ -143,8 +140,6 @@ function ProjectDashboard() {
   /* ── Add member ── */
   async function handleAddMember(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMemberFormError('');
-    setMemberSuccess('');
     setAddingMember(true);
 
     try {
@@ -154,10 +149,9 @@ function ProjectDashboard() {
 
       await fetchProject();
       setMemberEmail('');
-      setMemberSuccess('Member added successfully.');
-      setTimeout(() => setMemberSuccess(''), 3000);
+      toast.success('Member added successfully.');
     } catch (err: unknown) {
-      setMemberFormError(extractMessage(err, 'Failed to add member.'));
+      toast.error(extractMessage(err, 'Failed to add member.'));
     } finally {
       setAddingMember(false);
     }
@@ -177,8 +171,9 @@ function ProjectDashboard() {
           ),
         };
       });
+      toast.success('Task status updated.');
     } catch {
-      setError('Failed to update task status.');
+      toast.error('Failed to update task status.');
     } finally {
       setUpdatingTaskId(null);
     }
@@ -249,21 +244,6 @@ function ProjectDashboard() {
         )}
       </div>
 
-      {/* ── Error banner ── */}
-      {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
-          <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-200" aria-label="Dismiss">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {/* ── Action buttons row ── */}
       <div className="mb-6 flex flex-wrap gap-3">
         <button
@@ -293,12 +273,6 @@ function ProjectDashboard() {
       {showTaskForm && (
         <div className="animate-fade-in-up mb-8 rounded-xl border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 backdrop-blur-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Create Task</h2>
-
-          {taskFormError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {taskFormError}
-            </div>
-          )}
 
           <form onSubmit={handleCreateTask} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -395,17 +369,6 @@ function ProjectDashboard() {
       {showMemberForm && (
         <div className="animate-fade-in-up mb-8 rounded-xl border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 backdrop-blur-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Add Team Member</h2>
-
-          {memberFormError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {memberFormError}
-            </div>
-          )}
-          {memberSuccess && (
-            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-              {memberSuccess}
-            </div>
-          )}
 
           <form onSubmit={handleAddMember} className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
