@@ -37,7 +37,7 @@ function AdminDashboard() {
   const fetchUsers = useCallback(async () => {
     try {
       setError('');
-      const { data } = await api.get<User[]>('/users');
+      const { data } = await api.get<{ users: User[] }>('/users');
       setUsers(data.users);
     } catch {
       setError('Failed to load users.');
