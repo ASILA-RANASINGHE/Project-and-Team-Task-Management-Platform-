@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../components/AuthenticatedLayout';
+import StatsCard from '../../components/StatsCard';
 import { api } from '../../lib/api';
 
 interface Manager {
@@ -155,6 +156,44 @@ function ManagerDashboard() {
             </>
           )}
         </button>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          }
+          label="Total Projects"
+          value={projects.length}
+          accentGradient="from-amber-400 to-orange-500"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          }
+          label="Total Tasks"
+          value={projects.reduce((acc, proj) => acc + proj.tasks.length, 0)}
+          accentGradient="from-sky-400 to-indigo-500"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="Completed Tasks"
+          value={projects.reduce(
+            (acc, proj) =>
+              acc + proj.tasks.filter((t) => t.status === 'DONE').length,
+            0
+          )}
+          accentGradient="from-emerald-400 to-teal-500"
+        />
       </div>
 
       {/* ── Error banner ── */}
