@@ -10,6 +10,7 @@ import { api } from '../../../../lib/api';
 /* ── Types ── */
 
 type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 interface Assignee {
   id: string;
@@ -22,6 +23,7 @@ interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
   dueDate: string | null;
   assigneeId: string | null;
   assignee: Assignee | null;
@@ -58,6 +60,12 @@ const STATUS_BADGE: Record<TaskStatus, string> = {
   DONE: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
 };
 
+const PRIORITY_BADGE: Record<TaskPriority, string> = {
+  LOW: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  MEDIUM: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
+  HIGH: 'bg-red-500/10 text-red-400 ring-red-500/20',
+};
+
 /* ───────────────────────────────────────────
    Inner dashboard (rendered inside guard)
    ─────────────────────────────────────────── */
@@ -75,6 +83,7 @@ function ProjectDashboard() {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [taskDue, setTaskDue] = useState('');
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('MEDIUM');
   const [taskAssignee, setTaskAssignee] = useState('');
   const [creatingTask, setCreatingTask] = useState(false);
 
@@ -115,6 +124,7 @@ function ProjectDashboard() {
       const body: Record<string, unknown> = {
         title: taskTitle.trim(),
         projectId: id,
+        priority: taskPriority,
       };
       if (taskDesc.trim()) body.description = taskDesc.trim();
       if (taskDue) body.dueDate = taskDue;
@@ -127,6 +137,7 @@ function ProjectDashboard() {
       setTaskTitle('');
       setTaskDesc('');
       setTaskDue('');
+      setTaskPriority('MEDIUM');
       setTaskAssignee('');
       setShowTaskForm(false);
       toast.success('Task created successfully!');
@@ -321,6 +332,23 @@ function ProjectDashboard() {
                 />
               </div>
 
+              {/* Priority */}
+              <div>
+                <label htmlFor="task-priority" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Priority
+                </label>
+                <select
+                  id="task-priority"
+                  value={taskPriority}
+                  onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
+                  className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm text-white outline-none ring-amber-500/40 transition-all duration-200 focus:border-amber-500/50 focus:bg-white/[0.08] focus:ring-2"
+                >
+                  <option value="LOW" className="bg-slate-800">Low</option>
+                  <option value="MEDIUM" className="bg-slate-800">Medium</option>
+                  <option value="HIGH" className="bg-slate-800">High</option>
+                </select>
+              </div>
+
               {/* Assignee */}
               <div>
                 <label htmlFor="task-assignee" className="mb-1.5 block text-sm font-medium text-slate-300">
@@ -443,6 +471,9 @@ function ProjectDashboard() {
                   Assignee
                 </th>
                 <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Priority
+                </th>
+                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Due Date
                 </th>
                 <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -482,6 +513,15 @@ function ProjectDashboard() {
                       ) : (
                         <span className="text-slate-600">—</span>
                       )}
+                    </td>
+
+                    {/* Priority */}
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${PRIORITY_BADGE[task.priority]}`}
+                      >
+                        {task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}
+                      </span>
                     </td>
 
                     {/* Due date */}

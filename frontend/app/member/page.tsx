@@ -10,6 +10,7 @@ import { api } from '../../lib/api';
 /* ── Types ── */
 
 type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 interface ProjectInfo {
   id: string;
@@ -21,6 +22,7 @@ interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
   dueDate: string | null;
   projectId: string;
   project: ProjectInfo;
@@ -51,6 +53,12 @@ const STATUS_COLORS: Record<TaskStatus, { badge: string; border: string }> = {
     badge: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
     border: 'border-emerald-500/10 hover:border-emerald-500/30',
   },
+};
+
+const PRIORITY_BADGE: Record<TaskPriority, string> = {
+  LOW: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  MEDIUM: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
+  HIGH: 'bg-red-500/10 text-red-400 ring-red-500/20',
 };
 
 /* ───────────────────────────────────────────
@@ -182,10 +190,17 @@ function MemberDashboard() {
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  {/* Project name badge */}
-                  <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400 ring-1 ring-inset ring-white/10">
-                    {task.project?.name ?? 'Unknown Project'}
-                  </span>
+                  {/* Project name badge and Priority badge */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400 ring-1 ring-inset ring-white/10">
+                      {task.project?.name ?? 'Unknown Project'}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${PRIORITY_BADGE[task.priority]}`}
+                    >
+                      {task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}
+                    </span>
+                  </div>
 
                   {/* Task title */}
                   <h3 className="mt-2 text-lg font-semibold text-white">
