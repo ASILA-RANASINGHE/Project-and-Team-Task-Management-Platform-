@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../../../components/AuthenticatedLayout';
+import { useToast } from '../../../../context/ToastContext';
 import { api } from '../../../../lib/api';
 
 /* ──────────────────────────────────────────
@@ -12,15 +13,14 @@ import { api } from '../../../../lib/api';
 
 function CreateProjectForm() {
   const router = useRouter();
+  const toast = useToast();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -29,6 +29,7 @@ function CreateProjectForm() {
         description: description.trim() || undefined,
       });
 
+      toast.success('Project created successfully!');
       router.push('/manager');
     } catch (err: unknown) {
       if (
@@ -38,12 +39,12 @@ function CreateProjectForm() {
         typeof (err as { response?: { data?: { message?: string } } }).response
           ?.data?.message === 'string'
       ) {
-        setError(
+        toast.error(
           (err as { response: { data: { message: string } } }).response.data
             .message,
         );
       } else {
-        setError('Failed to create project. Please try again.');
+        toast.error('Failed to create project. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -111,43 +112,6 @@ function CreateProjectForm() {
               team members and tasks after creation.
             </p>
           </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 flex-shrink-0"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{error}</span>
-              <button
-                onClick={() => setError('')}
-                className="ml-auto text-red-400 transition-colors hover:text-red-200"
-                aria-label="Dismiss error"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">

@@ -4,11 +4,13 @@ import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute, { Role } from '../../../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../../../components/AuthenticatedLayout';
+import { useToast } from '../../../../context/ToastContext';
 import { api } from '../../../../lib/api';
 
 /* ── Types ── */
 
 type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 interface Assignee {
   id: string;
@@ -21,6 +23,7 @@ interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
   dueDate: string | null;
   assigneeId: string | null;
   assignee: Assignee | null;
@@ -57,6 +60,12 @@ const STATUS_BADGE: Record<TaskStatus, string> = {
   DONE: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
 };
 
+const PRIORITY_BADGE: Record<TaskPriority, string> = {
+  LOW: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  MEDIUM: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
+  HIGH: 'bg-red-500/10 text-red-400 ring-red-500/20',
+};
+
 /* ───────────────────────────────────────────
    Inner dashboard (rendered inside guard)
    ─────────────────────────────────────────── */
@@ -64,26 +73,24 @@ const STATUS_BADGE: Record<TaskStatus, string> = {
 function ProjectDashboard() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   // ── Task form ──
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [taskDue, setTaskDue] = useState('');
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('MEDIUM');
   const [taskAssignee, setTaskAssignee] = useState('');
   const [creatingTask, setCreatingTask] = useState(false);
-  const [taskFormError, setTaskFormError] = useState('');
 
   // ── Member form ──
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [memberEmail, setMemberEmail] = useState('');
   const [addingMember, setAddingMember] = useState(false);
-  const [memberFormError, setMemberFormError] = useState('');
-  const [memberSuccess, setMemberSuccess] = useState('');
 
   // ── Status update ──
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
@@ -91,7 +98,6 @@ function ProjectDashboard() {
   /* ── Fetch project ── */
   const fetchProject = useCallback(async () => {
     try {
-      setError('');
       const { data } = await api.get<{ project: ProjectDetail } | ProjectDetail>(
         `/projects/${id}`,
       );
@@ -99,11 +105,11 @@ function ProjectDashboard() {
       const proj = 'project' in data ? data.project : data;
       setProject(proj);
     } catch {
-      setError('Failed to load project.');
+      toast.error('Failed to load project.');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     fetchProject();
@@ -112,13 +118,13 @@ function ProjectDashboard() {
   /* ── Create task ── */
   async function handleCreateTask(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setTaskFormError('');
     setCreatingTask(true);
 
     try {
       const body: Record<string, unknown> = {
         title: taskTitle.trim(),
         projectId: id,
+        priority: taskPriority,
       };
       if (taskDesc.trim()) body.description = taskDesc.trim();
       if (taskDue) body.dueDate = taskDue;
@@ -131,10 +137,12 @@ function ProjectDashboard() {
       setTaskTitle('');
       setTaskDesc('');
       setTaskDue('');
+      setTaskPriority('MEDIUM');
       setTaskAssignee('');
       setShowTaskForm(false);
+      toast.success('Task created successfully!');
     } catch (err: unknown) {
-      setTaskFormError(extractMessage(err, 'Failed to create task.'));
+      toast.error(extractMessage(err, 'Failed to create task.'));
     } finally {
       setCreatingTask(false);
     }
@@ -143,8 +151,6 @@ function ProjectDashboard() {
   /* ── Add member ── */
   async function handleAddMember(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMemberFormError('');
-    setMemberSuccess('');
     setAddingMember(true);
 
     try {
@@ -154,10 +160,9 @@ function ProjectDashboard() {
 
       await fetchProject();
       setMemberEmail('');
-      setMemberSuccess('Member added successfully.');
-      setTimeout(() => setMemberSuccess(''), 3000);
+      toast.success('Member added successfully.');
     } catch (err: unknown) {
-      setMemberFormError(extractMessage(err, 'Failed to add member.'));
+      toast.error(extractMessage(err, 'Failed to add member.'));
     } finally {
       setAddingMember(false);
     }
@@ -177,8 +182,9 @@ function ProjectDashboard() {
           ),
         };
       });
+      toast.success('Task status updated.');
     } catch {
-      setError('Failed to update task status.');
+      toast.error('Failed to update task status.');
     } finally {
       setUpdatingTaskId(null);
     }
@@ -249,21 +255,6 @@ function ProjectDashboard() {
         )}
       </div>
 
-      {/* ── Error banner ── */}
-      {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
-          <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-200" aria-label="Dismiss">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {/* ── Action buttons row ── */}
       <div className="mb-6 flex flex-wrap gap-3">
         <button
@@ -293,12 +284,6 @@ function ProjectDashboard() {
       {showTaskForm && (
         <div className="animate-fade-in-up mb-8 rounded-xl border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 backdrop-blur-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Create Task</h2>
-
-          {taskFormError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {taskFormError}
-            </div>
-          )}
 
           <form onSubmit={handleCreateTask} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -345,6 +330,23 @@ function ProjectDashboard() {
                   onChange={(e) => setTaskDue(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm text-white outline-none ring-amber-500/40 transition-all duration-200 focus:border-amber-500/50 focus:bg-white/[0.08] focus:ring-2 [color-scheme:dark]"
                 />
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label htmlFor="task-priority" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Priority
+                </label>
+                <select
+                  id="task-priority"
+                  value={taskPriority}
+                  onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
+                  className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm text-white outline-none ring-amber-500/40 transition-all duration-200 focus:border-amber-500/50 focus:bg-white/[0.08] focus:ring-2"
+                >
+                  <option value="LOW" className="bg-slate-800">Low</option>
+                  <option value="MEDIUM" className="bg-slate-800">Medium</option>
+                  <option value="HIGH" className="bg-slate-800">High</option>
+                </select>
               </div>
 
               {/* Assignee */}
@@ -395,17 +397,6 @@ function ProjectDashboard() {
       {showMemberForm && (
         <div className="animate-fade-in-up mb-8 rounded-xl border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 backdrop-blur-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Add Team Member</h2>
-
-          {memberFormError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {memberFormError}
-            </div>
-          )}
-          {memberSuccess && (
-            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-              {memberSuccess}
-            </div>
-          )}
 
           <form onSubmit={handleAddMember} className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
@@ -480,6 +471,9 @@ function ProjectDashboard() {
                   Assignee
                 </th>
                 <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Priority
+                </th>
+                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Due Date
                 </th>
                 <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -519,6 +513,15 @@ function ProjectDashboard() {
                       ) : (
                         <span className="text-slate-600">—</span>
                       )}
+                    </td>
+
+                    {/* Priority */}
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${PRIORITY_BADGE[task.priority]}`}
+                      >
+                        {task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}
+                      </span>
                     </td>
 
                     {/* Due date */}

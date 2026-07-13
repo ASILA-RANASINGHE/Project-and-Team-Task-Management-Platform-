@@ -11,6 +11,7 @@ const registerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   email: z.string().trim().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
+  role: z.enum(['TEAM_MEMBER', 'PROJECT_MANAGER']).optional(),
 });
 
 const loginSchema = z.object({
@@ -34,7 +35,7 @@ router.post('/register', async (req, res, next) => {
       });
     }
 
-    const { name, email, password } = parsed.data;
+const { name, email, password, role } = parsed.data;
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
@@ -42,6 +43,7 @@ router.post('/register', async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
+        role: role || 'TEAM_MEMBER',
       },
     });
 

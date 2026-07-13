@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
 const { authenticate } = require('../middleware/authenticate');
@@ -14,6 +14,7 @@ const createTaskSchema = z.object({
   projectId: z.string().min(1, 'projectId is required'),
   assigneeId: z.string().optional(),
   dueDate: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
 });
 
 const updateStatusSchema = z.object({
@@ -61,7 +62,7 @@ router.post(
         });
       }
 
-      const { title, description, projectId, assigneeId, dueDate } = parsed.data;
+      const { title, description, projectId, assigneeId, dueDate, priority } = parsed.data;
 
       const task = await prisma.task.create({
         data: {
@@ -69,6 +70,7 @@ router.post(
           description,
           projectId,
           assigneeId,
+          priority,
           dueDate: dueDate ? new Date(dueDate) : undefined,
         },
         include: {

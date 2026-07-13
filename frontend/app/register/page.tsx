@@ -3,24 +3,45 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
+import { useToast } from '../../context/ToastContext';
+
+type RegisterRole = 'TEAM_MEMBER' | 'PROJECT_MANAGER';
+
+const roleOptions: Array<{
+  value: RegisterRole;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'TEAM_MEMBER',
+    label: 'Team Member',
+    description: 'Work on assigned tasks and collaborate with your team.',
+  },
+  {
+    value: 'PROJECT_MANAGER',
+    label: 'Project Manager',
+    description: 'Create projects, assign work, and track delivery.',
+  },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [role, setRole] = useState<RegisterRole>('TEAM_MEMBER');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
-      await api.post('/auth/register', { name, email, password });
+      await api.post('/auth/register', { name, email, password, role });
+      toast.success('Account created successfully! Please sign in.');
       router.push('/login');
     } catch (err: unknown) {
       if (
@@ -30,12 +51,12 @@ export default function RegisterPage() {
         typeof (err as { response?: { data?: { message?: string } } }).response
           ?.data?.message === 'string'
       ) {
-        setError(
+        toast.error(
           (err as { response: { data: { message: string } } }).response.data
             .message,
         );
       } else {
-        setError('Registration failed. Please try again.');
+        toast.error('Registration failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -78,25 +99,6 @@ export default function RegisterPage() {
               Join the platform to start managing projects
             </p>
           </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 flex-shrink-0"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -178,6 +180,61 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
+
+            {/* Role */}
+            <fieldset>
+              <legend className="mb-2 block text-sm font-medium text-slate-300">
+                Select your role
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {roleOptions.map((option) => {
+                  const isSelected = role === option.value;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={`group relative flex cursor-pointer flex-col gap-2 rounded-xl border p-4 transition-all duration-200 ${
+                        isSelected
+                          ? 'border-emerald-400/60 bg-emerald-500/10 shadow-lg shadow-emerald-500/10'
+                          : 'border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border transition-colors duration-200 ${
+                            isSelected
+                              ? 'border-emerald-400 bg-emerald-400'
+                              : 'border-slate-500 bg-transparent group-hover:border-slate-300'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <span className="h-2.5 w-2.5 rounded-full bg-slate-950" />
+                          ) : null}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-white">
+                              {option.label}
+                            </span>
+                            <input
+                              type="radio"
+                              name="register-role"
+                              value={option.value}
+                              checked={isSelected}
+                              onChange={() => setRole(option.value)}
+                              className="sr-only"
+                            />
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-400">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
 
             {/* Submit */}
             <button
