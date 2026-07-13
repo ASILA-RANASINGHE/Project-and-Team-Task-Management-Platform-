@@ -5,6 +5,25 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
+type RegisterRole = 'TEAM_MEMBER' | 'PROJECT_MANAGER';
+
+const roleOptions: Array<{
+  value: RegisterRole;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'TEAM_MEMBER',
+    label: 'Team Member',
+    description: 'Work on assigned tasks and collaborate with your team.',
+  },
+  {
+    value: 'PROJECT_MANAGER',
+    label: 'Project Manager',
+    description: 'Create projects, assign work, and track delivery.',
+  },
+];
+
 export default function RegisterPage() {
   const router = useRouter();
   const toast = useToast();
@@ -12,6 +31,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<RegisterRole>('TEAM_MEMBER');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -20,7 +40,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await api.post('/auth/register', { name, email, password });
+      await api.post('/auth/register', { name, email, password, role });
       toast.success('Account created successfully! Please sign in.');
       router.push('/login');
     } catch (err: unknown) {
@@ -160,6 +180,61 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
+
+            {/* Role */}
+            <fieldset>
+              <legend className="mb-2 block text-sm font-medium text-slate-300">
+                Select your role
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {roleOptions.map((option) => {
+                  const isSelected = role === option.value;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={`group relative flex cursor-pointer flex-col gap-2 rounded-xl border p-4 transition-all duration-200 ${
+                        isSelected
+                          ? 'border-emerald-400/60 bg-emerald-500/10 shadow-lg shadow-emerald-500/10'
+                          : 'border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border transition-colors duration-200 ${
+                            isSelected
+                              ? 'border-emerald-400 bg-emerald-400'
+                              : 'border-slate-500 bg-transparent group-hover:border-slate-300'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <span className="h-2.5 w-2.5 rounded-full bg-slate-950" />
+                          ) : null}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-white">
+                              {option.label}
+                            </span>
+                            <input
+                              type="radio"
+                              name="register-role"
+                              value={option.value}
+                              checked={isSelected}
+                              onChange={() => setRole(option.value)}
+                              className="sr-only"
+                            />
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-400">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
 
             {/* Submit */}
             <button
