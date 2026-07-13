@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../components/AuthenticatedLayout';
+import StatsCard from '../../components/StatsCard';
 import { api } from '../../lib/api';
 
 interface User {
@@ -89,6 +90,40 @@ function AdminDashboard() {
         <p className="mt-2 text-sm text-slate-400">
           View all registered users and manage their roles.
         </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          }
+          label="Total Users"
+          value={users.length}
+          accentGradient="from-sky-400 to-indigo-500"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          }
+          label="Project Managers"
+          value={users.filter((u) => u.role === 'PROJECT_MANAGER').length}
+          accentGradient="from-amber-400 to-orange-500"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+          label="Team Members"
+          value={users.filter((u) => u.role === 'TEAM_MEMBER').length}
+          accentGradient="from-violet-400 to-purple-500"
+        />
       </div>
 
       {/* Error banner */}
