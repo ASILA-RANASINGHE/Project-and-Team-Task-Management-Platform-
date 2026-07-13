@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import { api } from '../../lib/api';
 
 /* ── Types ── */
@@ -296,7 +297,9 @@ function MemberDashboard() {
 export default function MemberPage() {
   return (
     <ProtectedRoute allowedRoles={['TEAM_MEMBER']}>
-      <MemberDashboard />
+      <AuthenticatedLayout>
+        <MemberDashboard />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }

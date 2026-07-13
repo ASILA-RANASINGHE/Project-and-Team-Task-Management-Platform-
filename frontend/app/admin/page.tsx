@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import { api } from '../../lib/api';
 
 interface User {
@@ -238,7 +239,9 @@ function AdminDashboard() {
 export default function AdminPage() {
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
-      <AdminDashboard />
+      <AuthenticatedLayout>
+        <AdminDashboard />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }

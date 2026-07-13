@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../../../components/AuthenticatedLayout';
 import { api } from '../../../../lib/api';
 
 /* ──────────────────────────────────────────
@@ -253,7 +254,9 @@ function CreateProjectForm() {
 export default function NewProjectPage() {
   return (
     <ProtectedRoute allowedRoles={['PROJECT_MANAGER']}>
-      <CreateProjectForm />
+      <AuthenticatedLayout>
+        <CreateProjectForm />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }
