@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import { api } from '../../lib/api';
 
 interface Manager {
@@ -331,7 +332,9 @@ function ManagerDashboard() {
 export default function ManagerPage() {
   return (
     <ProtectedRoute allowedRoles={['PROJECT_MANAGER']}>
-      <ManagerDashboard />
+      <AuthenticatedLayout>
+        <ManagerDashboard />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }

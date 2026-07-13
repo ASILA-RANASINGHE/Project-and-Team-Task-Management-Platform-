@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute, { Role } from '../../../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../../../components/AuthenticatedLayout';
 import { api } from '../../../../lib/api';
 
 /* ── Types ── */
@@ -589,7 +590,9 @@ function ProjectDashboard() {
 export default function ProjectDetailPage() {
   return (
     <ProtectedRoute allowedRoles={['PROJECT_MANAGER']}>
-      <ProjectDashboard />
+      <AuthenticatedLayout>
+        <ProjectDashboard />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }

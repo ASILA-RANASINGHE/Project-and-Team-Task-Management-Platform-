@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
+import AuthenticatedLayout from '../../components/AuthenticatedLayout';
 import { api } from '../../lib/api';
 
 interface User {
@@ -37,7 +38,7 @@ function AdminDashboard() {
   const fetchUsers = useCallback(async () => {
     try {
       setError('');
-      const { data } = await api.get<User[]>('/users');
+      const { data } = await api.get<{ users: User[] }>('/users');
       setUsers(data.users);
     } catch {
       setError('Failed to load users.');
@@ -238,7 +239,9 @@ function AdminDashboard() {
 export default function AdminPage() {
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
-      <AdminDashboard />
+      <AuthenticatedLayout>
+        <AdminDashboard />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 }
