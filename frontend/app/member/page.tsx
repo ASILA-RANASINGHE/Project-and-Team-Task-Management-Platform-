@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute, { Role } from '../../components/ProtectedRoute';
 import AuthenticatedLayout from '../../components/AuthenticatedLayout';
+import StatsCard from '../../components/StatsCard';
 import { api } from '../../lib/api';
 
 /* ── Types ── */
@@ -113,6 +114,40 @@ function MemberDashboard() {
         <p className="mt-2 text-sm text-slate-400">
           View and update the status of tasks assigned to you.
         </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="To Do"
+          value={tasks.filter((t) => t.status === 'TODO').length}
+          accentGradient="from-slate-400 to-slate-600"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          }
+          label="In Progress"
+          value={tasks.filter((t) => t.status === 'IN_PROGRESS').length}
+          accentGradient="from-amber-400 to-orange-500"
+        />
+        <StatsCard
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="Completed"
+          value={tasks.filter((t) => t.status === 'DONE').length}
+          accentGradient="from-emerald-400 to-teal-500"
+        />
       </div>
 
       {/* Error banner */}
